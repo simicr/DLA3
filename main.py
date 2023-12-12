@@ -6,14 +6,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+def scheduler(epoch, lr):
+   if epoch < 10:
+     return lr
+   else:
+     return lr * tf.math.exp(-0.1)
 
 N_CLASSES = 20
 INPUT_SIZE = (32, 32, 1)
 LOSS = 'categorical_crossentropy'
 METRICS = ['accuracy']
-CALLBACKS = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)] # Correct?
+CALLBACKS = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3), tf.keras.callbacks.LearningRateScheduler(scheduler)] # Correct?
 BATCH_SIZE = 32
-EPOCHS = 10
+EPOCHS = 15
 
 train_data, test_data = tfd.cifar100.load_data(label_mode="coarse")
 (x_train, y_train), (x_test, y_test) = train_data, test_data
@@ -28,6 +33,8 @@ x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.
 TRAIN_SIZE, _ , _ , _ = x_train.shape
 input_img = tf.keras.Input(shape=INPUT_SIZE)
 y_pred = None
+
+
 
 def task1():
     fig, axs = plt.subplots(4, 5)
@@ -60,7 +67,10 @@ def M1():
 def M2():
     global y_pred
 
-    h1 = tf.keras.layers.Conv2D(filters=4, kernel_size=(3,3), activation='relu', padding='same')(input_img)
+    h0 = tf.keras.layers.Conv2D(filters=4, kernel_size=(1,1))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((1,1))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=4, kernel_size=(3,3), activation='relu', padding='same')(h0)
     h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
 
     h2 = tf.keras.layers.Conv2D(filters=4, kernel_size=(3, 3), activation='relu', padding='same')(h1)
@@ -81,10 +91,30 @@ def M2():
 def M3():
     global y_pred
 
+    h0 = tf.keras.layers.Conv2D(filters=3, kernel_size=(1,1))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((1,1))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=3, kernel_size=(5,5), padding='same')(h0)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=5, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    h3 = tf.keras.layers.Conv2D(filters=3, kernel_size=(3,3), padding='same')(h2)
+    h3 = tf.keras.layers.MaxPool2D((2,2))(h3)
+
+    h4 = tf.keras.layers.Conv2D(filters=3, kernel_size=(3,3), padding='same')(h3)
+    h4 = tf.keras.layers.MaxPool2D((2,2))(h4)
+
+    fh1 = tf.keras.layers.Flatten()(h4)
+    fh2 = tf.keras.layers.Dense(units=128, activation='relu')(fh1)
+    fh3 = tf.keras.layers.Dense(units=64, activation='relu')(fh2)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
 
-M2()
+
+M3()
 model = tf.keras.Model(input_img, y_pred)
 model.summary()
 
@@ -92,7 +122,7 @@ sampler = tf.keras.preprocessing.image.ImageDataGenerator(horizontal_flip=True, 
                                                           width_shift_range=0.1, height_shift_range=0.1).flow(x_train, y_train, batch_size=BATCH_SIZE)
 
 
-model.compile(optimizer=tf.keras.optimizers.Adam(), loss=LOSS, metrics=['accuracy'])
+model.compile(optimizer=tf.keras.optimizers.Adam(), loss=LOSS, metrics=METRICS)
 model.fit(sampler, epochs=EPOCHS, steps_per_epoch=TRAIN_SIZE//BATCH_SIZE, callbacks=CALLBACKS, validation_data=(x_val, y_val))
 test_loss, test_acc = model.evaluate(x_val, y_val)
 
