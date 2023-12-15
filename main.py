@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import pandas as pd #for saving results
 
 def scheduler(epoch, lr):
    if epoch < 10:
@@ -30,9 +31,15 @@ y_test = tf.keras.utils.to_categorical(y_test, num_classes=N_CLASSES)
 
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, stratify=y_train, random_state=42)
 
+# normalize input data
+x_train_n = (x_train.astype('float32')) / 255
+x_val_n = (x_val.astype('float32')) / 255
+
 TRAIN_SIZE, _ , _ , _ = x_train.shape
 input_img = tf.keras.Input(shape=INPUT_SIZE)
 y_pred = None
+
+
 
 
 
@@ -68,7 +75,7 @@ def M2():
     global y_pred
 
     h0 = tf.keras.layers.Conv2D(filters=4, kernel_size=(1,1))(input_img)
-    h0 = tf.keras.layers.MaxPool2D((1,1))(h0)
+    # h0 = tf.keras.layers.MaxPool2D((1,1))(h0) #this does nothing
 
     h1 = tf.keras.layers.Conv2D(filters=4, kernel_size=(3,3), activation='relu', padding='same')(h0)
     h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
@@ -92,7 +99,7 @@ def M3():
     global y_pred
 
     h0 = tf.keras.layers.Conv2D(filters=3, kernel_size=(1,1))(input_img)
-    h0 = tf.keras.layers.MaxPool2D((1,1))(h0)
+    h0 = tf.keras.layers.MaxPool2D((1,1))(h0) #this does nothing
 
     h1 = tf.keras.layers.Conv2D(filters=3, kernel_size=(5,5), padding='same')(h0)
     h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
@@ -112,19 +119,52 @@ def M3():
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
+def M5():
+    global y_pred
+    #double number of filters on each iteration - generic first layers, specific later layers 
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
 
 
-M3()
+
+    fh1 = tf.keras.layers.Flatten()(h2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu')(fh1)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu')(fh2)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
+
+
+M5()
+#added model name to save statistics and keep track of it at least a bit - convenient for converting to latex later too - can delete for submission
+model_name = 'M5'
 model = tf.keras.Model(input_img, y_pred)
 model.summary()
 
 sampler = tf.keras.preprocessing.image.ImageDataGenerator(horizontal_flip=True, vertical_flip=True,
-                                                          width_shift_range=0.1, height_shift_range=0.1).flow(x_train, y_train, batch_size=BATCH_SIZE)
+                                                          width_shift_range=0.1, height_shift_range=0.1).flow(x_train_n, y_train, batch_size=BATCH_SIZE)
 
 
-model.compile(optimizer=tf.keras.optimizers.Adam(), loss=LOSS, metrics=METRICS)
-model.fit(sampler, epochs=EPOCHS, steps_per_epoch=TRAIN_SIZE//BATCH_SIZE, callbacks=CALLBACKS, validation_data=(x_val, y_val))
-test_loss, test_acc = model.evaluate(x_val, y_val)
+optimizer = tf.keras.optimizers.Adam()
+
+model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
+history = model.fit(sampler, epochs=EPOCHS, steps_per_epoch=TRAIN_SIZE//BATCH_SIZE, callbacks=CALLBACKS, validation_data=(x_val_n, y_val))
+
+#csv QoL
+history_df = pd.DataFrame(history.history)
+history_df.to_csv(f'{model_name}_training_history.csv', index=False)
+
+test_loss, test_acc = model.evaluate(x_val_n, y_val)
+
+#csv QoL
+evaluation_df = pd.DataFrame({'Test Loss': [test_loss], 'Test Accuracy': [test_acc]})
+evaluation_df.to_csv(f'{model_name}_evaluation_results.csv', index=False)
 
 
 
