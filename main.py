@@ -236,6 +236,9 @@ def C5():
     fh3 = tf.keras.layers.Dropout(0.1)(fh3)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
+
+#very sparse dropout layer with two regularizations, about same performance as c2 and c3 but for some reason reaches it way faster than 
+#c2 and is slighlty more accurate on training data than c3
 def C6():
     global y_pred
     h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
@@ -254,6 +257,8 @@ def C6():
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
+
+#very shit, too agressive model, stays at same. I thought single regularization might give good results when combined with dropout
 def C7():
     global y_pred
     global y_pred
