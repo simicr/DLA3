@@ -118,30 +118,52 @@ def M3():
     fh3 = tf.keras.layers.Dense(units=64, activation='relu')(fh2)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
-
-def M5():
+def M4():
     global y_pred
-    #double number of filters on each iteration - generic first layers, specific later layers 
-    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
-    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
 
-    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
-    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+    h0 = tf.keras.layers.Conv2D(filters=16, kernel_size=(5,5))(input_img)
+    
+ 
+    h1 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.AvgPool2D((3,3))(h1)
 
-    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), padding='same')(h1)
     h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
 
+    h3 = tf.keras.layers.Conv2D(filters=16, kernel_size=(3,3), padding='same')(h2)
+    h3 = tf.keras.layers.MaxPool2D((2,2))(h3)
 
+
+    fh1 = tf.keras.layers.Flatten()(h3)
+    fh2 = tf.keras.layers.Dense(units=128, activation='relu')(fh1)
+    fh3 = tf.keras.layers.Dense(units=64, activation='relu')(fh2)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
+def M5(l1_value, l2_value):
+    global y_pred
+    # Double number of filters on each iteration - generic first layers, specific later layers 
+    reg = tf.keras.regularizers.L1L2(l1=l1_value, l2=l2_value)
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), kernel_regularizer=reg)(input_img)
+    h0 = tf.keras.layers.MaxPool2D((2, 2))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), padding='same', kernel_regularizer=reg)(h0)
+    h1 = tf.keras.layers.MaxPool2D((2, 2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3, 3), padding='same', kernel_regularizer=reg)(h1)
+    h2 = tf.keras.layers.MaxPool2D((2, 2))(h2)
 
     fh1 = tf.keras.layers.Flatten()(h2)
-    fh2 = tf.keras.layers.Dense(units=256, activation='relu')(fh1)
-    fh3 = tf.keras.layers.Dense(units=128, activation='relu')(fh2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=reg)(fh1)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=reg)(fh2)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
 
 
-M5()
+#l1, l2 parameters - this model gets 0.412 accuracy on normal training of 10 epochs
+M5(0, 0)
+model_name = 'M5-regularized'
 #added model name to save statistics and keep track of it at least a bit - convenient for converting to latex later too - can delete for submission
 model_name = 'M5'
 model = tf.keras.Model(input_img, y_pred)
