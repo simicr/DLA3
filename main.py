@@ -334,6 +334,15 @@ def C8():
     fh3 = tf.keras.layers.Dropout(0.1)(fh3)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
+#
+# TASK D
+# 
+    
+x_full, y_full = train_data
+x_full = np.mean(x_full, axis=3)
+x_full = np.expand_dims(x_full, axis=-1) 
+y_full = tf.keras.utils.to_categorical(y_full, num_classes=N_CLASSES)
+
 
 #
 # TASK E - C7 seems to be the best performing model so the models used here stem from it
@@ -462,7 +471,8 @@ data_augmenter = tf.keras.preprocessing.image.ImageDataGenerator( rotation_range
 sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_train, batch_size=BATCH_SIZE)
 sampler_augmented = data_augmenter.flow(x_train, y_train, batch_size=BATCH_SIZE)
 
-E1()
+C7()
 #please if you use data augmentation, say so in the model name and swap out the the sampler
-model_name = 'E1-augmented'
-train_and_evaluate_model(y_pred, sampler_augmented, model_name, perturbation=True)
+model_name = 'D1-Full'
+train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
+
