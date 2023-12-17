@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
+import os
+
 
 def scheduler(epoch, lr):
    if epoch < 10:
@@ -32,6 +34,12 @@ y_test = tf.keras.utils.to_categorical(y_test, num_classes=N_CLASSES)
 
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, stratify=y_train, random_state=42)
 
+dict = pickle.load(open("cifar20_perturb_test.pkl", "rb"))
+x_perturb, y_perturb = dict['x_perturb'], dict['y_perturb']
+x_perturb = np.mean(x_perturb, axis=3)
+x_perturb = np.expand_dims(x_perturb, axis=-1)
+y_perturb = tf.keras.utils.to_categorical(y_perturb, num_classes=N_CLASSES)
+
 
 # Define some more variables.
 TRAIN_SIZE, _ , _ , _ = x_train.shape
@@ -51,6 +59,17 @@ def task_a():
         ax.set_xticks([])
         ax.set_yticks([])
     plt.show()
+
+    class_counts_train = np.sum(y_train, axis=0)
+    class_counts_val = np.sum(y_train, axis=0)
+    class_proportions_train = class_counts_train / len(y_train)
+    class_proportions_val = class_counts_val / len(y_val)
+
+    # Print the proportions for each class
+    for class_label, proportion in enumerate(class_proportions_train):
+        print(f"Class {class_label}: Proportion - {proportion:.4f}")
+    for class_label, proportion in enumerate(class_proportions_val):
+        print(f"Class {class_label}: Proportion - {proportion:.4f}")
 
 
 #
@@ -317,28 +336,133 @@ def C8():
 
 
 #
-# TASK E
+# TASK E - C7 seems to be the best performing model so the models used here stem from it
 #
+    
+#no batch norm - same as C7 Actually - the idea is just to test it for data augmentation
+def E1():
+    global y_pred
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
 
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    fh1 = tf.keras.layers.Flatten()(h2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh1)
+    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh2)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
+
+
+
+#batch norm on all layers 
+def E2():
+    global y_pred
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
+    h0 = tf.keras.layers.BatchNormalization()(h0)
+    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.BatchNormalization()(h1)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.BatchNormalization()(h2)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    fh1 = tf.keras.layers.Flatten()(h2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh1)
+    fh2 = tf.keras.layers.BatchNormalization()(fh2)
+    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh2)
+    fh3 = tf.keras.layers.BatchNormalization()(fh3)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
+
+#batch norm on dense layers only
+def E3():
+    global y_pred
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    fh1 = tf.keras.layers.Flatten()(h2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh1)
+    fh2 = tf.keras.layers.BatchNormalization()(fh2)
+    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh2)
+    fh3 = tf.keras.layers.BatchNormalization()(fh3)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
+
+
+# function to train and reload model - utilitity - does the same thing as before but more convenienty
+#if you wanna test on the perturbation dataset, set perturbation to true
+def train_and_evaluate_model(y_pred, sampler, model_name, retrain=False, perturbation=False):
+    model_save_path = f"results/{model_name}_model.h5"
+    history_csv_path = f'results/{model_name}_training_history.csv'
+    evaluation_csv_path = f'results/{model_name}_evaluation_results.csv'
+    perturbation_csv_path = f'results/{model_name}_perturbed_results.csv'
+
+    if not retrain and os.path.exists(model_save_path):
+        # Load the existing model
+        model = tf.keras.models.load_model(model_save_path)
+        print(f"Loaded pre-trained model '{model_name}'.")
+
+    else:
+        model = tf.keras.Model(input_img, y_pred)
+        print(model_name)
+
+        optimizer = tf.keras.optimizers.Adam()
+
+        model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
+        history = model.fit(sampler, epochs=EPOCHS, steps_per_epoch=TRAIN_SIZE // BATCH_SIZE, callbacks=CALLBACKS, validation_data=(x_val, y_val))
+        
+        model.save(model_save_path)
+
+
+    test_loss, test_acc = model.evaluate(x_val, y_val)
+    history_df = pd.DataFrame(history.history)
+    history_df.to_csv(history_csv_path, index=False)
+
+    evaluation_df = pd.DataFrame({'Test Loss': [test_loss], 'Test Accuracy': [test_acc]})
+    evaluation_df.to_csv(evaluation_csv_path, index=False)
+
+    if perturbation:
+        perturbation_loss, perturbation_acc = model.evaluate(x_perturb, y_perturb)
+        perturbation_df = pd.DataFrame({'Perturbation Loss': [perturbation_loss], 'Perturbation Accuracy': [perturbation_acc]})
+        perturbation_df.to_csv(perturbation_csv_path, index=False)
+
+    
+
+    return model
+
+data_augmenter = tf.keras.preprocessing.image.ImageDataGenerator( rotation_range=0, horizontal_flip=True, vertical_flip=True,
+                                                          width_shift_range=0.1, height_shift_range=0.1,
+                                                          validation_split=0.2, fill_mode='reflect')
+
+# model.summary()
 sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_train, batch_size=BATCH_SIZE)
+sampler_augmented = data_augmenter.flow(x_train, y_train, batch_size=BATCH_SIZE)
 
-optimizer = tf.keras.optimizers.Adam()    
-C8()
-model_name = 'C8'
-
-model = tf.keras.Model(input_img, y_pred)
-model.summary()
-
-
-model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
-history = model.fit(sampler, epochs=EPOCHS, steps_per_epoch=TRAIN_SIZE//BATCH_SIZE, callbacks=CALLBACKS, validation_data=(x_val, y_val))
-test_loss, test_acc = model.evaluate(x_val, y_val)
-
-# Write down results in a csv file.
-history_df = pd.DataFrame(history.history)
-history_df.to_csv(f'{model_name}_training_history.csv', index=False)
-evaluation_df = pd.DataFrame({'Test Loss': [test_loss], 'Test Accuracy': [test_acc]})
-evaluation_df.to_csv(f'{model_name}_evaluation_results.csv', index=False)
-
-
-
+E1()
+#please if you use data augmentation, say so in the model name and swap out the the sampler
+model_name = 'E1-augmented'
+train_and_evaluate_model(y_pred, sampler_augmented, model_name, perturbation=True)
