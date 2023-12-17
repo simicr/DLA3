@@ -122,6 +122,27 @@ def M3():
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
+def M4():
+    global y_pred
+    h0 = tf.keras.layers.Conv2D(filters=16, kernel_size=(5,5))(input_img)
+
+
+    h1 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.AvgPool2D((3,3))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    h3 = tf.keras.layers.Conv2D(filters=16, kernel_size=(3,3), padding='same')(h2)
+    h3 = tf.keras.layers.MaxPool2D((2,2))(h3)
+
+
+    fh1 = tf.keras.layers.Flatten()(h3)
+    fh2 = tf.keras.layers.Dense(units=128, activation='relu')(fh1)
+    fh3 = tf.keras.layers.Dense(units=64, activation='relu')(fh2)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
 def M5():
     global y_pred
     #double number of filters on each iteration - generic first layers, specific later layers 
@@ -300,6 +321,7 @@ def C8():
 #
 
 sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_train, batch_size=BATCH_SIZE)
+
 optimizer = tf.keras.optimizers.Adam()    
 C8()
 model_name = 'C8'
