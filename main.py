@@ -237,8 +237,7 @@ def C5():
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 
-#very sparse dropout layer with two regularizations, about same performance as c2 and c3 but for some reason reaches it way faster than 
-#c2 and is slighlty more accurate on training data than c3
+# Addinng dropout with 0.1 and L2 reg with lambda = 0.001 
 def C6():
     global y_pred
     h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
@@ -252,15 +251,13 @@ def C6():
 
     fh1 = tf.keras.layers.Flatten()(h2)
     fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.001))(fh1)
-    fh2 = tf.keras.layers.Dropout(0.01)(fh2)
+    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
     fh3 = tf.keras.layers.Dense(units=128, activation='relu',  kernel_regularizer=tf.keras.regularizers.L2(0.001))(fh2)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
-
-
-#very shit, too agressive model, stays at same. I thought single regularization might give good results when combined with dropout
+# Addinng dropout with 0.1 and L2 reg with lambda = 0.01
 def C7():
-    global y_pred
     global y_pred
     h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
     h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
@@ -272,18 +269,40 @@ def C7():
     h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
 
     fh1 = tf.keras.layers.Flatten()(h2)
-    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.001))(fh1)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh1)
     fh2 = tf.keras.layers.Dropout(0.1)(fh2)
-    fh3 = tf.keras.layers.Dense(units=128, activation='relu')(fh2)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh2)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+# Adding dropout with 0.1 with L2 reg with lambda 0.1
+def C8():
+    global y_pred
+    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3))(input_img)
+    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
+
+    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same')(h0)
+    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
+
+    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same')(h1)
+    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
+
+    fh1 = tf.keras.layers.Flatten()(h2)
+    fh2 = tf.keras.layers.Dense(units=256, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.1))(fh1)
+    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
+    fh3 = tf.keras.layers.Dense(units=128, activation='relu', kernel_regularizer=tf.keras.regularizers.L2(0.1))(fh2)
+    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
+    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
+
+
 #
 # TASK E
 #
 
 sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_train, batch_size=BATCH_SIZE)
 optimizer = tf.keras.optimizers.Adam()    
-C7()
-model_name = 'C7'
+C8()
+model_name = 'C8'
 
 model = tf.keras.Model(input_img, y_pred)
 model.summary()
