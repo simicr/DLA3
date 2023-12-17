@@ -419,12 +419,48 @@ def E3():
     fh3 = tf.keras.layers.Dropout(0.1)(fh3)
     y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
+def final_training(model_name, sampler, retrain=False, perturbation=False):
+    model_save_path = f"results/{model_name}_model.h5"
+    history_csv_path = f'results/{model_name}_training_history.csv'
+    evaluation_csv_path = f'results/{model_name}_evaluation_results.csv'
+    perturbation_csv_path = f'results/{model_name}_perturbed_results.csv'
 
+    if not retrain and os.path.exists(model_save_path):
+        # Load the existing model
+        model = tf.keras.models.load_model(model_save_path)
+        print(f"Loaded pre-trained model '{model_name}'.")
+
+    else:
+        model = tf.keras.Model(input_img, y_pred)
+        print(model_name)
+
+        optimizer = tf.keras.optimizers.Adam()
+
+        model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
+        history = model.fit(sampler, epochs=EPOCHS, steps_per_epoch=len(x_full) // BATCH_SIZE, callbacks=CALLBACKS[1:])
+
+        
+        model.save(model_save_path)
+
+    test_loss, test_acc = model.evaluate(x_test, y_test)
+    history_df = pd.DataFrame(history.history)
+    history_df.to_csv(history_csv_path, index=False)
+
+    evaluation_df = pd.DataFrame({'Test Loss': [test_loss], 'Test Accuracy': [test_acc]})
+    evaluation_df.to_csv(evaluation_csv_path, index=False)
+
+    if perturbation:
+        perturbation_loss, perturbation_acc = model.evaluate(x_perturb, y_perturb)
+        perturbation_df = pd.DataFrame({'Perturbation Loss': [perturbation_loss], 'Perturbation Accuracy': [perturbation_acc]})
+        perturbation_df.to_csv(perturbation_csv_path, index=False)
+
+
+    return model
 
 
 # function to train and reload model - utilitity - does the same thing as before but more convenienty
 #if you wanna test on the perturbation dataset, set perturbation to true
-def train_and_evaluate_model(y_pred, sampler, model_name, retrain=False, perturbation=False):
+def train_and_evaluate_model(sampler, model_name, retrain=False, perturbation=False):
     model_save_path = f"results/{model_name}_model.h5"
     history_csv_path = f'results/{model_name}_training_history.csv'
     evaluation_csv_path = f'results/{model_name}_evaluation_results.csv'
@@ -446,7 +482,6 @@ def train_and_evaluate_model(y_pred, sampler, model_name, retrain=False, perturb
         
         model.save(model_save_path)
 
-
     test_loss, test_acc = model.evaluate(x_val, y_val)
     history_df = pd.DataFrame(history.history)
     history_df.to_csv(history_csv_path, index=False)
@@ -459,8 +494,6 @@ def train_and_evaluate_model(y_pred, sampler, model_name, retrain=False, perturb
         perturbation_df = pd.DataFrame({'Perturbation Loss': [perturbation_loss], 'Perturbation Accuracy': [perturbation_acc]})
         perturbation_df.to_csv(perturbation_csv_path, index=False)
 
-    
-
     return model
 
 data_augmenter = tf.keras.preprocessing.image.ImageDataGenerator( rotation_range=0, horizontal_flip=True, vertical_flip=True,
@@ -470,9 +503,13 @@ data_augmenter = tf.keras.preprocessing.image.ImageDataGenerator( rotation_range
 # model.summary()
 sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_train, batch_size=BATCH_SIZE)
 sampler_augmented = data_augmenter.flow(x_train, y_train, batch_size=BATCH_SIZE)
+sampler_full = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_full, y_full, batch_size=BATCH_SIZE)
 
 C7()
 #please if you use data augmentation, say so in the model name and swap out the the sampler
 model_name = 'D1-Full'
-train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
+# train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
+final_training(model_name, sampler_full, True, True)
+
+
 
