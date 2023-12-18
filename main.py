@@ -405,28 +405,7 @@ def E2():
 
 
 #batch norm on dense layers only
-def E3():
-    global y_pred
-    h0 = tf.keras.layers.Conv2D(filters=32, kernel_size=(3,3), activation='relu')(input_img)
-    h0 = tf.keras.layers.MaxPool2D((2,2))(h0)
 
-    h1 = tf.keras.layers.Conv2D(filters=128, kernel_size=(3,3), padding='same', activation='relu')(h0)
-    h1 = tf.keras.layers.MaxPool2D((2,2))(h1)
-
-    h2 = tf.keras.layers.Conv2D(filters=256, kernel_size=(3,3), padding='same', activation='relu')(h1)
-    h2 = tf.keras.layers.MaxPool2D((2,2))(h2)
-
-    fh1 = tf.keras.layers.Flatten()(h2)
-    fh2 = tf.keras.layers.Dense(units=256, kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh1)
-    fh2 = tf.keras.layers.BatchNormalization()(fh2)
-    fh2 = tf.keras.layers.Activation('relu')(fh2)
-    fh2 = tf.keras.layers.Dropout(0.1)(fh2)
-
-    fh3 = tf.keras.layers.Dense(units=128, kernel_regularizer=tf.keras.regularizers.L2(0.01))(fh2)
-    fh3 = tf.keras.layers.BatchNormalization()(fh3)
-    fh3 = tf.keras.layers.Activation('relu')(fh3)
-    fh3 = tf.keras.layers.Dropout(0.1)(fh3)
-    y_pred = tf.keras.layers.Dense(units=N_CLASSES, activation='softmax')(fh3)
 
 def final_training(model_name, sampler, retrain=False, perturbation=False):
     model_save_path = f"{model_name}_model.h5"
