@@ -506,17 +506,15 @@ sampler = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_train, y_trai
 sampler_full = tf.keras.preprocessing.image.ImageDataGenerator().flow(x_full, y_full, batch_size=BATCH_SIZE)
 
 
-
-
 EPOCHS = 14
 
 
 
 C7()
 #please if you use data augmentation, say so in the model name and swap out the the sampler
-model_name = 'D1-Validation'
+model_name = 'D1-With-Validation'
 # train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
-final_training(model_name, sampler, retrain=True, perturbation=True)
+train_and_evaluate_model(sampler, model_name,  retrain=True, perturbation=True)
 model_name = 'D1-Full'
 # train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
 final_training(model_name, sampler_full, retrain=False, perturbation=True)
@@ -532,6 +530,16 @@ final_training(model_name, sampler_augmented_mixed, retrain=False, perturbation=
 E2()
 model_name = 'E2'
 final_training(model_name, sampler_full, retrain=False, perturbation=True)
+
+E2()
+model_name = 'E2-augmented-flip'
+final_training(model_name, sampler_augmented_spins, retrain=True, perturbation=True)
+
+model_name = 'E2-augmented-brigtness'
+final_training(model_name, sampler_augmented_brightness, retrain=True, perturbation=True)
+
+model_name = 'E2-augmented-mixed'
+final_training(model_name, sampler_augmented_mixed, retrain=True, perturbation=True)
 
 
 
