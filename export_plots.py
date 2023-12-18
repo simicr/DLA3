@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import pickle 
+import numpy as np 
+import tensorflow as tf
 
 def plot_training_validation_accuracy(model_name):
-    df = pd.read_csv(f'{model_name}_training_history.csv')
+    df = pd.read_csv(f'results/{model_name}_training_history.csv')
 
     # Get training and validation accuracy
     train_acc = df['accuracy']
@@ -27,22 +30,54 @@ def export_latex_tables(list_csvs):
     if not list_csvs:
         return None
     
-    latex_table = "\\begin{table}[htbp]\n\\centering\n\\begin{tabular}{|c||c|" + "c|" * (len(pd.read_csv(f'results/{list_csvs[0]}_evaluation_results.csv').columns) - 1) + "}\n\\hline\n"
+    latex_table = "\\begin{table}[htbp]\n\\centering\n\\begin{tabular}{|c||c|c|c|" + "c|" * (len(pd.read_csv(f'results/{list_csvs[0]}_evaluation_results.csv').columns) - 1) + "}\n\\hline\n"
     
-    columns = ["Model"] + pd.read_csv(f'results/{list_csvs[0]}_evaluation_results.csv').columns[:].tolist()
+    columns = ["Model"] + pd.read_csv(f'results/{list_csvs[0]}_training_history.csv').columns[:4].tolist()
     latex_table += " & ".join(map(str, columns)) + " \\\\\n\\hline\n"
 
     for csv_file in list_csvs:
         model_name = csv_file
-        data = pd.read_csv(f'results/{csv_file}_evaluation_results.csv')
-        for _, row in data.iterrows():
-            latex_table += f"{model_name} & " + " & ".join(map(str, row)) + " \\\\\n\\hline\n"
+        data = pd.read_csv(f'results/{csv_file}_training_history.csv')
+        data = data.round(3)
+        index = data.shape[0]
+        print(index)
+        for i, row in data.iterrows():
+            if i < index - 1: continue
+            latex_table += f"{model_name} & " + " & ".join(map(str, row[:4])) + " \\\\\n\\hline\n"
 
     latex_table += "\\end{tabular}\n\\caption{Your caption here}\n\\end{table}"
     
     return latex_table
 
 
-# models = ['M5', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
+dict = pickle.load(open("cifar20_perturb_test.pkl", "rb"))
+x_perturb, y_perturb = dict['x_perturb'], dict['y_perturb']
+x_perturb = np.mean(x_perturb, axis=3)
+x_perturb = np.expand_dims(x_perturb, axis=-1)
+y_perturb = tf.keras.utils.to_categorical(y_perturb, num_classes=20)
+
+def explore_augmented_dataset():
+    i = 0 
+    while i < len(x_perturb):
+        fig, axs = plt.subplots(2, 4)
+        axs = axs.flatten()
+        
+        for _, ax in enumerate(axs):
+            ax.imshow(x_perturb[i], cmap='gray')
+            i+=1
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+        plt.tight_layout()
+        plt.show()
+
+# explore_augmented_dataset()
+
+
 models = ['M1', 'M2', 'M3', 'M4', 'M5']
+# for m in models:
+#     plot_training_validation_accuracy(m)
+# models = ['M5', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
+# models = ['E1', 'E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
+
 print(export_latex_tables(models))
