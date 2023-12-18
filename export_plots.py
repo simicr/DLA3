@@ -74,10 +74,11 @@ def explore_augmented_dataset():
 # explore_augmented_dataset()
 
 
-models = ['M1', 'M2', 'M3', 'M4', 'M5']
+# models = ['M1', 'M2', 'M3', 'M4', 'M5']
+# models = ['M5', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
 # for m in models:
 #     plot_training_validation_accuracy(m)
-# models = ['M5', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
-# models = ['E1', 'E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
+
+models = ['E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
 
 print(export_latex_tables(models))

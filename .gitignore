@@ -1,1 +1,3 @@
 *.png
+cifar20_perturb_test.pkl
+*.h5
