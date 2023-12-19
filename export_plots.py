@@ -80,6 +80,6 @@ def explore_augmented_dataset():
 #     plot_training_validation_accuracy(m)
 
 # models = ['E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
-models = ['E2']
+models = ['D1-With-Validation']
 
 print(export_latex_tables(models))
