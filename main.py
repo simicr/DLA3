@@ -511,35 +511,21 @@ EPOCHS = 14
 
 
 C7()
-#please if you use data augmentation, say so in the model name and swap out the the sampler
-model_name = 'D1-With-Validation'
+# model_name = 'D1-With-Validation'
 # train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
-train_and_evaluate_model(sampler, model_name,  retrain=True, perturbation=True)
+# train_and_evaluate_model(sampler, model_name,  retrain=False, perturbation=True)
 model_name = 'D1-Full'
-# train_and_evaluate_model(y_pred, sampler, model_name, perturbation=True)
-final_training(model_name, sampler_full, retrain=False, perturbation=True)
+model_final = final_training(model_name, sampler_full, retrain=True, perturbation=True)
+predicted_labels = model_final.predict(x_test)
 
-E1()
-model_name = 'E1-augmented-flip'
-final_training(model_name,sampler_augmented_spins, retrain=False, perturbation=True)
-model_name = 'E1-augmented-brigtness'
-final_training(model_name, sampler_augmented_brightness, retrain=False, perturbation=True)
-model_name = 'E1-augmented-mixed'
-final_training(model_name, sampler_augmented_mixed, retrain=False, perturbation=True)
+predicted_indices = np.argmax(predicted_labels, axis=1)
+true_indices = np.argmax(y_test, axis=1)
+confusion_matrix = tf.math.confusion_matrix(predicted_indices, true_indices)
+#both predicted_labels and y_test have the same shape
+# np.save("results/confusion_matrix.npy", confusion_matrix)
+print(confusion_matrix)
 
-E2()
-model_name = 'E2'
-final_training(model_name, sampler_full, retrain=False, perturbation=True)
 
-E2()
-model_name = 'E2-augmented-flip'
-final_training(model_name, sampler_augmented_spins, retrain=True, perturbation=True)
-
-model_name = 'E2-augmented-brigtness'
-final_training(model_name, sampler_augmented_brightness, retrain=True, perturbation=True)
-
-model_name = 'E2-augmented-mixed'
-final_training(model_name, sampler_augmented_mixed, retrain=True, perturbation=True)
 
 
 

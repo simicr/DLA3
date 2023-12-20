@@ -4,6 +4,7 @@ import pickle
 import numpy as np 
 import tensorflow as tf
 
+
 def plot_training_validation_accuracy(model_name):
     df = pd.read_csv(f'results/{model_name}_training_history.csv')
 
@@ -76,10 +77,25 @@ def explore_augmented_dataset():
 
 # models = ['M1', 'M2', 'M3', 'M4', 'M5']
 # models = ['M5', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
+
+
+# models = ['E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
+# models = ['D1-With-Validation']
 # for m in models:
 #     plot_training_validation_accuracy(m)
 
-# models = ['E1-augmented-brigtness', 'E1-augmented-flip', 'E1-augmented-mixed']
-models = ['D1-With-Validation']
+# print(export_latex_tables(models))
 
-print(export_latex_tables(models))
+
+confusion_matrix = np.load("results/confusion_matrix.npy")
+def confusion_matrix_to_latex(matrix):
+    table = "\\begin{array}{|" + "|".join(["c" for _ in range(len(matrix) + 1)]) + "|}\n"
+    table += "\\hline\n"
+    table += " & " + " & ".join([str(i+1) for i in range(len(matrix))]) + " \\\\\n"
+    table += "\\hline\n"
+    table += "\\\\\n".join([f"{i+1} & {' & '.join(map(str, row))} \\\\" for i, row in enumerate(matrix)])
+    table += "\\\\\n\\hline\n\\end{array}"
+    return table
+
+latex_table = confusion_matrix_to_latex(confusion_matrix)
+print(latex_table)

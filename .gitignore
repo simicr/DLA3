@@ -1,3 +1,5 @@
 *.png
 cifar20_perturb_test.pkl
 *.h5
+results.confusion_matrix.npy
+results/confusion_matrix.npy
